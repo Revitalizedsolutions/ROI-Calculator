@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare ROI Calculator</title>
+    <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .input-group { margin-bottom: 1rem; }
+        .result-card { padding: 1rem; margin-bottom: 1rem; border-radius: 0.5rem; }
+        .result-card h3 { font-weight: bold; margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body>
+    <div id="calculator-root"></div>
+
+    <script>
+        const { useState } = React;
+
+        function ROICalculator() {
+            const [inputs, setInputs] = useState({
+                travelNurses: 10,
+                travelNurseRate: 150,
+                turnoverRate: 25,
+                costPerTurnover: 85000,
+                monthlyReadmissions: 30,
+                readmissionCost: 15000,
+                inPersonSitters: 20,
+                sitterHourlyRate: 25,
+                monthlyFalls: 50,
+                averageFallCost: 33000
+            });
+
+            const calculate = () => {
+                const annualHours = 8760;
+                
+                // Travel nurse savings
+                const virtualNurseRate = 85;
+                const travelNurseSavings = 
+                    inputs.travelNurses * 
+                    (inputs.travelNurseRate - virtualNurseRate) * 
+                    annualHours;
+
+                // Turnover savings (40% reduction)
+                const turnoverSavings = 
+                    (inputs.turnoverRate / 100) * 
+                    (inputs.travelNurses * 4) * 
+                    inputs.costPerTurnover * 
+                    0.4;
+
+                // Readmission savings (20% reduction)
+                const readmissionSavings = 
+                    inputs.monthlyReadmissions * 
+                    12 * 
+                    inputs.readmissionCost * 
+                    0.2;
+
+                // Sitter savings (12:1 ratio)
+                const virtualSittersNeeded = Math.ceil(inputs.inPersonSitters / 12);
+                const sitterSavings = 
+                    (inputs.inPersonSitters - virtualSittersNeeded) * 
+                    inputs.sitterHourlyRate * 
+                    annualHours;
+
+                // Fall prevention (80% reduction)
+                const fallSavings = 
+                    inputs.monthlyFalls * 
+                    12 * 
+                    inputs.averageFallCost * 
+                    0.8;
+
+                const totalSavings = 
+                    travelNurseSavings + 
+                    turnoverSavings + 
+                    readmissionSavings + 
+                    sitterSavings + 
+                    fallSavings;
+
+                const implementationCost = 2000000;
+                const roi = ((totalSavings - implementationCost) / implementationCost * 100).toFixed(1);
+
+                return {
+                    travelNurseSavings,
+                    turnoverSavings,
+                    readmissionSavings,
+                    sitterSavings,
+                    fallSavings,
+                    totalSavings,
+                    roi
+                };
+            };
+
+            const handleChange = (e) => {
+                setInputs(prev => ({
+                    ...prev,
+                    [e.target.name]: parseFloat(e.target.value) || 0
+                }));
+            };
+
+            const results = calculate();
+
+            const formatCurrency = (value) => 
+                new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD',
+                    maximumFractionDigits: 0
+                }).format(value);
+
+            const InputField = ({ label, name, value }) => (
+                <div className="input-group">
+                    <label className="block text-sm font-medium mb-1">{label}</label>
+                    <input
+                        type="number"
+                        name={name}
+                        value={value}
+                        onChange={handleChange}
+                        className="w-full p-2 border rounded"
+                    />
+                </div>
+            );
+
+            const ResultCard = ({ label, value, className }) => (
+                <div className={`result-card ${className}`}>
+                    <h3>{label}</h3>
+                    <p className="text-xl">{formatCurrency(value)}</p>
+                </div>
+            );
+
+            return (
+                <div className="max-w-4xl mx-auto p-4">
+                    <div className="bg-blue-50 p-6 rounded-lg mb-6">
+                        <h2 className="text-2xl font-bold mb-4">Healthcare ROI Calculator</h2>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <h3 className="font-bold mb-2">Staffing Inputs</h3>
+                                <InputField 
+                                    label="Current Travel Nurses"
+                                    name="travelNurses"
+                                    value={inputs.travelNurses}
+                                />
+                                <InputField 
+                                    label="Travel Nurse Hourly Rate ($)"
+                                    name="travelNurseRate"
+                                    value={inputs.travelNurseRate}
+                                />
+                                <InputField 
+                                    label="Annual Turnover Rate (%)"
+                                    name="turnoverRate"
+                                    value={inputs.turnoverRate}
+                                />
+                                <InputField 
+                                    label="Cost Per Turnover ($)"
+                                    name="costPerTurnover"
+                                    value={inputs.costPerTurnover}
+                                />
+                            </div>
+                            
+                            <div>
+                                <h3 className="font-bold mb-2">Quality Metrics</h3>
+                                <InputField 
+                                    label="Monthly Readmissions"
+                                    name="monthlyReadmissions"
+                                    value={inputs.monthlyReadmissions}
+                                />
+                                <InputField 
+                                    label="Cost Per Readmission ($)"
+                                    name="readmissionCost"
+                                    value={inputs.readmissionCost}
+                                />
+                                <InputField 
+                                    label="Current In-Person Sitters"
+                                    name="inPersonSitters"
+                                    value={inputs.inPersonSitters}
+                                />
+                                <InputField 
+                                    label="Monthly Falls"
+                                    name="monthlyFalls"
+                                    value={inputs.monthlyFalls}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <ResultCard 
+                            label="Travel Nurse Savings"
+                            value={results.travelNurseSavings}
+                            className="bg-green-50"
+                        />
+                        <ResultCard 
+                            label="Turnover Cost Savings"
+                            value={results.turnoverSavings}
+                            className="bg-blue-50"
+                        />
+                        <ResultCard 
+                            label="Readmission Savings"
+                            value={results.readmissionSavings}
+                            className="bg-purple-50"
+                        />
+                        <ResultCard 
+                            label="Sitter Labor Savings"
+                            value={results.sitterSavings}
+                            className="bg-yellow-50"
+                        />
+                        <ResultCard 
+                            label="Fall Prevention Savings"
+                            value={results.fallSavings}
+                            className="bg-pink-50"
+                        />
+                    </div>
+
+                    <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-green-100 p-6 rounded-lg">
+                            <h3 className="font-bold mb-2">Total Annual Savings</h3>
+                            <p className="text-3xl text-green-700">{formatCurrency(results.totalSavings)}</p>
+                        </div>
+                        <div className="bg-blue-100 p-6 rounded-lg">
+                            <h3 className="font-bold mb-2">Return on Investment</h3>
+                            <p className="text-3xl text-blue-700">{results.roi}%</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Initialize the calculator
+        ReactDOM.render(
+            React.createElement(ROICalculator),
+            document.getElementById('calculator-root')
+        );
+    </script>
+</body>
+</html>
